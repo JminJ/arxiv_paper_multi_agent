@@ -1,1 +1,4 @@
 .env
+.venv
+test.py
+poetry.lock
