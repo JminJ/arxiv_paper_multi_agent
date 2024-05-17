@@ -1,2 +1,2 @@
-# langgraph_multi_agent
-langgraph multi agent chat system.
+# Arxiv paper multi agent
+langgraph multi agent assistant for arxiv paper.
