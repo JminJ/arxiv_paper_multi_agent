@@ -6,12 +6,14 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.document_loaders import ArxivLoader
 
-from common import CHAT_MODEL
+from common import CHAT_MODEL, RECENT_PAPER_SEARCH_RSS_FORMAT
 from prompts import (
     EXTRACT_ARXIV_PAPER_ID_PROMPT,
-    RECENT_PAPER_SEARCH_RSS_FORMAT
+    MAKE_MARKDOWN_FORMAT_RECENT_PAPER_SUMMARY_PROMPT,
+    EXTRACT_RECENT_PAPER_TYPE_PROMPT
 )
-from utils.get_rss_url_values import get_parse_rss_url
+from utils.get_rss_url_values import get_processed_entries_from_rss_url
+
 
 @chain
 def arxiv_search_chain(user_input:str)->t.List[t.Dict]:
@@ -45,31 +47,46 @@ def arxiv_search_chain(user_input:str)->t.List[t.Dict]:
 
 
 @chain
-def get_recent_patents(user_input:str):
+def get_recent_papers(user_input:str):
     client = ChatOpenAI(model=CHAT_MODEL, temperature=0.0)
     
     # 1. 사용자 입력에서 분야를 추출
-    extract_paper_type = ChatPromptTemplate.from_messages(
+    extract_paper_type_prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", None),
-            ("user", None)
+            ("system", EXTRACT_RECENT_PAPER_TYPE_PROMPT[0]),
+            ("user", EXTRACT_RECENT_PAPER_TYPE_PROMPT[1])
         ]
     )
-
-    extract_paper_type_chain = extract_paper_type | client
-    paper_type = extract_paper_type_chain.invoke(input={"user_input": user_input})
+    extract_paper_type_chain = extract_paper_type_prompt | client
+    paper_type = extract_paper_type_chain.invoke(input={"user_input": user_input}).content
+    ic(paper_type)
     rss_url = RECENT_PAPER_SEARCH_RSS_FORMAT.format(paper_type)
 
-    rss_values = get_parse_rss_url(rss_url)
+    # 2. rss feed entries를 추출
+    rss_entries = get_processed_entries_from_rss_url(rss_url)
+
+    # 3. rss feed 기반 markdown을 생성(llm 사용)
+    markdown_generate_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", MAKE_MARKDOWN_FORMAT_RECENT_PAPER_SUMMARY_PROMPT[0]),
+            ("user", MAKE_MARKDOWN_FORMAT_RECENT_PAPER_SUMMARY_PROMPT[1])
+        ]
+    )
+    markdown_generate_chain = markdown_generate_prompt | client
+    recent_papers_markdown = markdown_generate_chain.invoke(input={"rss_entries": rss_entries}).content
+
+    return recent_papers_markdown
     
-
-
-
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
-    load_dotenv("/Users/jeongminju/Documents/GITHUB/langgraph_multi_agent/.env")
+    load_dotenv("/Users/jeongminju/Documents/GITHUB/arxiv_paper_multi_agent/.env")
 
-    user_input = "2404.19756 논문 내용을 정리해줘."
-    arxiv_chain_result = arxiv_search_chain.invoke(input={"user_input": user_input})
-    ic(arxiv_chain_result[0].metadata)
+    # user_input = "2404.19756 논문 내용을 정리해줘."
+    # arxiv_chain_result = arxiv_search_chain.invoke(input={"user_input": user_input})
+    # ic(arxiv_chain_result[0].metadata)
+
+    user_input = "자연어처리 분야의 최신 특허들을 나열"
+    recent_paper_markdown = get_recent_papers.invoke(input={"user_input": user_input})
+
+    ic(recent_paper_markdown)
