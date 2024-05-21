@@ -47,7 +47,15 @@ def arxiv_search_chain(user_input:str)->t.List[t.Dict]:
 
 
 @chain
-def get_recent_papers(user_input:str):
+def get_recent_papers(user_input:str)->str:
+    """사용자가 원하는 분야의 최신 논문들의 summary를 제공합니다.
+
+    Args:
+        user_input (str): 사용자 입력
+
+    Returns:
+        str: 최신 논문들을 정리한 markdown format text
+    """
     client = ChatOpenAI(model=CHAT_MODEL, temperature=0.0)
     
     # 1. 사용자 입력에서 분야를 추출
