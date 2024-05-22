@@ -99,3 +99,15 @@ You're the world class summarizer. Please summarize the original outline of the 
 """,
     "summarize below text\ntext: {}\nAnswer: "
 ]
+
+POLISH_UP_PROMPTS = [
+    """
+Polishing up bellow internet search results. Result should be korean:
+
+<internet search result>
+{internet_search_result}
+</internet search result>
+
+Answer:
+"""
+]

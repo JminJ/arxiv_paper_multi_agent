@@ -4,13 +4,16 @@ from icecream import ic
 from langchain_core.runnables import chain
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 from langchain_community.document_loaders import ArxivLoader
+from langchain_community.tools import DuckDuckGoSearchRun
 
 from common import CHAT_MODEL, RECENT_PAPER_SEARCH_RSS_FORMAT
 from prompts import (
     EXTRACT_ARXIV_PAPER_ID_PROMPT,
     MAKE_MARKDOWN_FORMAT_RECENT_PAPER_SUMMARY_PROMPT,
-    EXTRACT_RECENT_PAPER_TYPE_PROMPT
+    EXTRACT_RECENT_PAPER_TYPE_PROMPT,
+    POLISH_UP_PROMPTS
 )
 from utils.get_rss_url_values import get_processed_entries_from_rss_url
 
@@ -85,6 +88,32 @@ def get_recent_papers(user_input:str)->str:
 
     return recent_papers_markdown
     
+    
+@chain
+def duckduckgo_search(user_input:str)->str:
+    """internet search를 duckduckgo search를 사용해 진행합니다. 이후 검색 결과들을 llm을 통해 정리하고 반환합니다. 
+
+    Args:
+        user_input (str): 사용자 입력
+
+    Returns:
+        str: llm을 통해 정리된 인터넷 검색 결과
+    """
+    ddg_search = DuckDuckGoSearchRun()
+    internet_search_result = ddg_search.invoke(user_input)
+    ic(internet_search_result)
+
+    polish_up_prompt = ChatPromptTemplate.from_messages(
+        [
+            # MessagesPlaceholder(variable_name="messages"),
+            ("user", str(POLISH_UP_PROMPTS[0]))
+        ]
+    )
+    polish_up_chain = polish_up_prompt | ChatOpenAI(temperature=0) | StrOutputParser()
+    polish_up_result = polish_up_chain.invoke(input={"internet_search_result": internet_search_result})
+
+    return polish_up_result
+
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
