@@ -93,12 +93,42 @@ Please, make each entries to markdown follow below instructions:
 ]
 
 
+EXPLAIN_MATHEMATIC_PROMPT = [
+    """You are the world class math explainer. Please provide explaination of user question.
+
+The cases of user question can be below list:
+
+    1. request that explain formulas that in given full paper.
+
+    2. request that explain formulas that user given.
+
+    3. request that explain the concept in the field of mathematics.
+
+
+
+Basically you have to follow this procedure:
+
+    1. explains formula in detail. 
+
+    2. give a list of concepts are used in the formula. 
+
+    3. explains concepts in above step's result.
+
+
+
+If user want to explain mathematic concept, explain that with easy examples.
+""",
+    "answer to me:\n{user_input}\nAnswer: "
+]
+
+
 SUMMARY_PATENT_SUMMARY_CONTENT_PROMPT = [
     """
 You're the world class summarizer. Please summarize the original outline of the paper in 2 to 3 lines.
 """,
     "summarize below text\ntext: {}\nAnswer: "
 ]
+
 
 POLISH_UP_PROMPTS = [
     """
