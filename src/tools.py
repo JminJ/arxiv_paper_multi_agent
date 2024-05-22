@@ -43,7 +43,7 @@ def arxiv_search_chain(user_input:str)->t.List[t.Dict]:
     ic(paper_id)
 
     # 2. search arxiv paper
-    paper_infos = [ArxivLoader(query=id, doc_content_chars_max=1).load()[0] for id in paper_id]
+    paper_infos = [ArxivLoader(query=id, doc_content_chars_max=1, load_all_available_meta=True).load()[0] for id in paper_id]
     ic(paper_infos)
 
     return paper_infos
@@ -119,11 +119,11 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv("/Users/jeongminju/Documents/GITHUB/arxiv_paper_multi_agent/.env")
 
-    # user_input = "2404.19756 논문 내용을 정리해줘."
-    # arxiv_chain_result = arxiv_search_chain.invoke(input={"user_input": user_input})
-    # ic(arxiv_chain_result[0].metadata)
+    user_input = "2404.19756 논문 내용을 정리해줘."
+    arxiv_chain_result = arxiv_search_chain.invoke(input={"user_input": user_input})
+    ic(arxiv_chain_result[0].metadata)
 
-    user_input = "자연어처리 분야의 최신 특허들을 나열"
-    recent_paper_markdown = get_recent_papers.invoke(input={"user_input": user_input})
+    # user_input = "자연어처리 분야의 최신 특허들을 나열"
+    # recent_paper_markdown = get_recent_papers.invoke(input={"user_input": user_input})
 
-    ic(recent_paper_markdown)
+    # ic(recent_paper_markdown)
