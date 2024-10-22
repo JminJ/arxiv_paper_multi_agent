@@ -3,10 +3,8 @@ import urllib
 import feedparser
 from openai import OpenAI
 
-import sys 
-sys.path.append("/Users/jeongminju/Documents/GITHUB/arxiv_paper_multi_agent/src")
-from prompts import SUMMARY_PATENT_SUMMARY_CONTENT_PROMPT
-from common import CHAT_SEED, CHAT_MODEL
+from src.common.prompts import SUMMARY_PATENT_SUMMARY_CONTENT_PROMPT
+from src.common.common import CHAT_SEED, CHAT_MODEL
 
 
 def _summarize_patent_summary_content(org_summary_text:str) -> str:

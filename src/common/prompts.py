@@ -130,3 +130,114 @@ Polishing up bellow internet search results. Result should be korean:
 Answer:
 """
 ]
+
+
+######### Tool Prompts
+ARXIV_PAPER_SEARCH_TOOL_DESC = """
+TOOL NAME)
+    arvix_paper_search_tool
+DESC)
+    This tool is searching arxiv papers by user given arxiv paper ids.
+ARGS)
+    user_input (str): user input text. you will extract arxiv paper ids from this input text.
+RETURN)
+    t.List[t.Dict]: paper infos.
+"""
+PAPER_INDEX_READ_TOOL_DESC = """
+TOOL NAME)
+    paper_index_read_tool
+DESC)
+    This tool is reading indexes(목차) in target paper pdf file.
+ARGS)
+    arxiv_pdf_name (str): target pdf file name for reading indexes.
+RETURN)
+    t.List[str]: list of paper pdf indexes.
+"""
+EXTRACT_INDEX_CONTENTS_TOOL_DESC = """
+TOOL NAME)
+    extract_index_contents_tool
+DESC)
+    This tool is extracting content text of each index.
+ARGS)
+    target_pdf_indexes (t.List[str]): all indexes in target paper pdf.
+    pdf_indexes (t.List[str]): indexes user want to extract content text.
+    all_pdf_text_content (str): all paper pdf content text.
+RETURN)
+    t.List[str]: extracted content text list.
+"""
+GET_RECENT_PAPERS_TOOL_DESC = """
+TOOL NAME)
+    get_recent_papers
+DESC)
+    This tool get recent paper infos in domain that user want to search. you will extract domain from user input text and search recent papers in that domain.
+ARGS)
+    user_input (str): user input text.
+RETURN)
+    str: markdown format text contain recent paper informations.
+"""
+
+ALL_PAPER_TOOLS_EXPLAINS = "\n\n".join(
+    [
+        ARXIV_PAPER_SEARCH_TOOL_DESC,
+        PAPER_INDEX_READ_TOOL_DESC,
+        EXTRACT_INDEX_CONTENTS_TOOL_DESC,
+        GET_RECENT_PAPERS_TOOL_DESC 
+    ]
+)
+
+
+DUCKDUCKGO_SEARCH_TOOL_DESC = """
+TOOL NAME)
+    duckduckgo_search_tool
+DESC)
+    This tool is used for searching informations from internet(using duckduckgo search api).
+ARGS)
+    search_query_text (str): query text for searching.
+RETURN)
+    str: search result analyzed by llm.
+"""
+
+ALL_SEARCH_TOOLS_EXPLAINS = "\n\n".join(
+    [
+        DUCKDUCKGO_SEARCH_TOOL_DESC
+    ]
+)
+
+
+######### Agent Prompts
+PAPER_AGENT_SYSTEM_PROMPT = "You are the agent who dealing operations about Arxiv Paper."
+PAPER_AGENT_DESC = f"""
+AGENT NAME)
+    Paper
+AGENT DESC)
+    This agent is handling jobs about paper. It can below operations. 
+        - search arxiv paper by arxiv id.
+        - reading indexes from paper pdf.
+        - extract content texts of target indexes.
+        - get recent paper informations in special domain.
+"""
+# {ALL_PAPER_TOOLS_EXPLAINS}
+
+SEARCH_AGENT_SYSTEM_PROMPT = "You are the agent who searching query and analyzing results."
+SEARCH_AGENT_DESC = f"""
+AGENT NAME)
+    Search
+AGENT DESC)
+    This agent is searching special query from internet. It can below operations. 
+        - search user query using duckduckgosearch api.
+"""
+# {ALL_PAPER_TOOLS_EXPLAINS}
+
+SUPERVISOR_AGENT_SYSTEM_PROMPT = """You are master supervisor in this system. 
+You will receive an input message from the user and need to parse it and pass it to the appropriate agent. 
+In some case, user input question is not matched any agent. Then, you should answer to user.
+If the agent's answer fits the user's question, select next role to FINISH for stop task."""
+
+######### Agent Prompts v2
+PAPER_SEARCH_AGENT_SYSTEM_PROMPT = "you are paper searcher from arxiv by arxiv paper id."
+PAPER_TEAM_MEMBER_DESC_PROMPT = """
+AGENT NAME)
+    arxiv_paper_searcher
+AGENT DESC)
+    this member agent is searching paper from arxiv using arxiv paper id. after searching, download that paper pdf, and extract indexes from it.
+"""
