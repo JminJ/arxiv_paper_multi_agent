@@ -36,21 +36,3 @@ paper_team_leader_agent = agent_creator.create_leader_agent(
     next_roles=["arxiv_paper_searcher"],
     tools=[get_recent_papers, get_user_question_part_contents],
 )
-
-
-if __name__ == "__main__":
-    from langchain_core.messages import HumanMessage
-
-    # print(paper_search_agent)
-    # result = paper_search_agent.invoke(input={"messages": [HumanMessage(content="2402.09353 논문을 검색해줘")], "agent_scratchpad": []})
-    # print(result)
-
-    result = paper_team_leader_agent.invoke(
-        input={
-            "messages": [
-                HumanMessage(content="3. Pattern Analysis of LoRA and FT 부분을 설명해주세요")
-            ],
-            "agent_scratchpad": [],
-        }
-    )
-    print(result)
