@@ -40,8 +40,8 @@ def _re_search_paper_index(text: str) -> t.Union[str, bool]:
         return False
 
 
-def agent_node(state, agent: Runnable) -> t.Dict[str, object]:
-    temp_agent_result = {}
+def agent_node(state, agent: Runnable, name:str) -> t.Dict[str, object]:
+    temp_agent_result = {"sender": name}
     agent_result = agent.invoke(state)
 
     # 1. next agent 검색
@@ -62,3 +62,4 @@ def agent_node(state, agent: Runnable) -> t.Dict[str, object]:
     temp_agent_result["messages"] = result_messages
 
     return temp_agent_result
+
