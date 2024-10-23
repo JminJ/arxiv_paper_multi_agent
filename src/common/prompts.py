@@ -14,7 +14,7 @@ user_input: 2401.15884번 논문을 읽고 설명해줘.
 Answer: ["2401.15884"]
 </example>
 """,
-    "extract arxiv paper id from below user input msg\nuser_input: {user_input}\nAnswer: "
+    "extract arxiv paper id from below user input msg\nuser_input: {user_input}\nAnswer: ",
 ]
 
 
@@ -69,7 +69,7 @@ user_input: 컴퓨터 비전 최신 논문들을 보고싶어
 Answer: cs.CV
 </Example>
 """,
-    "extract arxiv paper type from user input:\nuser_input: {user_input}\nAnswer: "
+    "extract arxiv paper type from user input:\nuser_input: {user_input}\nAnswer: ",
 ]
 
 
@@ -89,7 +89,7 @@ Please, make each entries to markdown follow below instructions:
     3. title should be head2(##), others should be head3(###).
     4. summary content must be translated to korean, and summrized 3~4 line.
 """,
-    "please, make markdown text using below datas:\n{rss_entries}"
+    "please, make markdown text using below datas:\n{rss_entries}",
 ]
 
 
@@ -107,7 +107,7 @@ Basically you have to follow this procedure:
 
 If user want to explain mathematic concept, explain that with easy examples.
 """,
-    "answer to me:\n{user_input}\nAnswer: "
+    "answer to me:\n{user_input}\nAnswer: ",
 ]
 
 
@@ -115,7 +115,7 @@ SUMMARY_PATENT_SUMMARY_CONTENT_PROMPT = [
     """
 You're the world class summarizer. Please summarize the original outline of the paper in 2 to 3 lines.
 """,
-    "summarize below text\ntext: {}\nAnswer: "
+    "summarize below text\ntext: {}\nAnswer: ",
 ]
 
 
@@ -181,7 +181,7 @@ ALL_PAPER_TOOLS_EXPLAINS = "\n\n".join(
         ARXIV_PAPER_SEARCH_TOOL_DESC,
         PAPER_INDEX_READ_TOOL_DESC,
         EXTRACT_INDEX_CONTENTS_TOOL_DESC,
-        GET_RECENT_PAPERS_TOOL_DESC 
+        GET_RECENT_PAPERS_TOOL_DESC,
     ]
 )
 
@@ -197,11 +197,7 @@ RETURN)
     str: search result analyzed by llm.
 """
 
-ALL_SEARCH_TOOLS_EXPLAINS = "\n\n".join(
-    [
-        DUCKDUCKGO_SEARCH_TOOL_DESC
-    ]
-)
+ALL_SEARCH_TOOLS_EXPLAINS = "\n\n".join([DUCKDUCKGO_SEARCH_TOOL_DESC])
 
 
 ######### Agent Prompts
@@ -239,5 +235,9 @@ PAPER_TEAM_MEMBER_DESC_PROMPT = """
 AGENT NAME)
     arxiv_paper_searcher
 AGENT DESC)
-    this member agent is searching paper from arxiv using arxiv paper id. after searching, download that paper pdf, and extract indexes from it.
+    - this member agent is searching paper from arxiv using arxiv paper id
+    - after searching, download that paper pdf
+    - after download, extracting indexes from it
+AGENT INPUT ARGS)
+    - user_input(str): 사용자 입력 message
 """
