@@ -12,6 +12,8 @@ from src.agents.agent import AgentCreator
 from src.agents.paper_agent.utils.paper_agent_utils import (
     get_recent_papers,
     get_user_question_part_contents,
+    search_paper_by_arxiv_id,
+    paper_index_extract
 )
 from src.common.common import (
     CHAT_MODEL,
@@ -27,12 +29,14 @@ from src.common.prompts import (
 
 agent_creator = AgentCreator()
 
-# 1. supervisor
-supervisor_agent = agent_creator.create_supervisor_agent()
-# 2. paper team leader
 paper_team_leader_agent = agent_creator.create_leader_agent(
     system_prompt="You are Paper Team's leader.",
     team_member_desc=PAPER_TEAM_MEMBER_DESC_PROMPT,
     next_roles=["arxiv_paper_searcher"],
     tools=[get_recent_papers, get_user_question_part_contents],
+)
+arxiv_paper_search_agent = agent_creator.create_chat_agent(
+    tools=[search_paper_by_arxiv_id, paper_index_extract],
+    system_prompt="You are Paper Team's member agent, 'arxiv_paper_search_agent'. You will do below jobs by your tools:\n1. search paper by arxiv paper id.n\2. download that paper\n3. extract paper's indexes.",
+    next_roles=["paper_team_leader", "supervisor"]
 )
