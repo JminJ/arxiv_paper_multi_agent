@@ -26,80 +26,6 @@ from src.utils.get_paper_page_indexes import ExtractPaperIndexes
 from src.utils.get_rss_url_values import get_processed_entries_from_rss_url
 from src.utils.paper_pdf_handler import paper_pdf_download, paper_pdf_load
 
-# @tool
-# def search_paper_from_arxiv(arxiv_paper_ids:t.List[str])->t.List[Document]:
-#     """search paper from arxiv by arxiv paper id.
-
-#     Args:
-#         arxiv_paper_ids (t.List[str]): arxiv paper ids that user want to search.
-
-#     Returns:
-#         t.List[Document]: searched paper objects.
-#     """
-#     paper_infos = [ArxivLoader(query=id, doc_content_chars_max=1, load_all_available_meta=True).load()[0] for id in arxiv_paper_ids]
-
-#     return paper_infos
-
-# @tool
-# def paper_index_read(pdf_object:pymupdf.Document)->t.List[str]:
-#     """논문 내 목차 정보를 수집하고 반환합니다.
-
-#     Args:
-#         pdf_object (pymupdf.Document): 논문 목차 추출 대상 논문.
-
-#     Returns:
-#         t.Dict[str, int]: 수집된 목차 dict. 목차명(str), 페이지(int)로 구성.
-#     """
-#     extract_paper_indexer = ExtractPaperIndexes(using_llm_name=CHAT_MODEL)
-#     arxiv_pdf_indexes = extract_paper_indexer.run_extract_all_indexes(paper_pages=pdf_object)
-
-#     del extract_paper_indexer
-
-#     return arxiv_pdf_indexes
-
-# @tool
-# def paper_pdf_read_set(arxiv_pdf_name:str)->pymupdf.Document:
-#     """논문을 다운로드 받고, pdf object를 반환합니다.
-
-#     Args:
-#         arxiv_pdf_name (str): 목차 정보를 수집할 대상 논문 pdf 이름
-
-#     Returns:
-#         pymupdf.Document: 로드된 논문 object.
-#     """
-#     loaded_pdf = fitz.open(os.path.join(PDF_DOWNLOAD_DIR, arxiv_pdf_name))
-
-#     return loaded_pdf
-
-# @tool
-# def extract_index_contents(target_pdf_indexes:t.List[str], pdf_indexes:t.Dict[str, int], all_pdf_text_content:pymupdf.Document)->t.List[str]:
-#     """pdf 내의 index에 해당하는 내용들을 추출합니다.
-
-#     Args:
-#         target_pdf_indexes (t.List[str]): 논문 전체 pdf_index들
-#         pdf_indexes (t.List[str]): 논문 본문 추출을 원하는 pdf_index들
-#         all_pdf_text_content (str): 특허 문서 전체 내용
-
-#     Returns:
-#         t.List[str]: 추출된 index의 내용들
-#     """
-#     each_index_content_dict = {}
-#     for idx in range(len(pdf_indexes)):
-#         temp_index = pdf_indexes[idx]
-#         if temp_index not in target_pdf_indexes.keys():
-#             continue
-#         temp_index_start_index = all_pdf_text_content.find(temp_index)
-
-#         temp_index_content = all_pdf_text_content[temp_index_start_index:]
-#         if idx < len(pdf_indexes)-1:
-#             # pdf_indexes의 길이와 idx가 같을 시 pass
-#             next_index_start_index = temp_index_content.find(pdf_indexes[idx+1])
-#             temp_index_content = temp_index_content[:next_index_start_index]
-
-#         each_index_content_dict[temp_index] = temp_index_content
-
-#     return each_index_content_dict
-
 
 @chain
 def arxiv_paper_search(user_input: str) -> t.Tuple[t.List[Document], t.Dict[str, int], str]:
@@ -146,6 +72,49 @@ def arxiv_paper_search(user_input: str) -> t.Tuple[t.List[Document], t.Dict[str,
 
     return paper_infos, paper_index_dict, paper_save_paths[0]
 
+@tool
+def search_paper_by_arxiv_id(arxiv_paper_id:t.List[str])->t.List[str]:
+    """arxiv id를 통해 특정 논문을 검색하고, 해당 논문 pdf를 다운로드를 수행합니다.
+
+    Args:
+        arxiv_paper_id (t.List[str]): 찾고자 하는 논문의 arxiv id들.
+
+    Returns:
+        t.List[str]: 논문을 다운로드한 경로(path)들.
+    """
+    # 1. search arxiv papers
+    paper_infos = [
+        ArxivLoader(query=id, doc_content_chars_max=1, load_all_available_meta=True).load()[0]
+        for id in arxiv_paper_id
+    ]
+
+    # 2. download paper pdfs
+    paper_save_paths = []
+    for paper_info in paper_infos:
+        http_pdf_path = paper_info.metadata["links"][1]
+        arxiv_pdf_name = ".".join([http_pdf_path.split("/")[-1][:10], "pdf"])
+        download_path = os.path.join(PDF_DOWNLOAD_DIR, arxiv_pdf_name)
+
+        if not os.path.isfile(download_path):
+            paper_pdf_download(http_pdf_path=http_pdf_path, pdf_download_path=download_path)
+        paper_save_paths.append(download_path)
+    
+    return paper_save_paths
+
+@tool
+def paper_index_extract(target_paper_path:str)->t.Dict[str, int]:
+    """대상 paper pdf내에서 index를 추출합니다.
+
+    Args:
+        target_paper_path (str): 추출할 대상 paper pdf 저장 경로(path).
+
+    Returns:
+        t.Dict[str, int]: 추출된 논문 목차들. Dict 내에는 page: index로 구성.
+    """
+    index_extractor = ExtractPaperIndexes(using_llm_name=CHAT_MODEL)
+    paper_index_dict = index_extractor.run_extract_all_indexes(paper_pdf_load(target_paper_path))
+
+    return paper_index_dict
 
 @tool
 def get_recent_papers(user_input: str) -> str:
