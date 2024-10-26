@@ -7,46 +7,48 @@ from langchain_core.messages import HumanMessage
 from langchain_core.utils.function_calling import convert_to_openai_function
 from langchain_openai import ChatOpenAI
 
-# from common.common import CHAT_MODEL
-# from common.prompts import (
-#     ALL_PAPER_TOOLS_EXPLAINS,
-#     ALL_SEARCH_TOOLS_EXPLAINS,
-#     PAPER_AGENT_SYSTEM_PROMPT,
-#     SEARCH_AGENT_SYSTEM_PROMPT,
-#     SUPERVISOR_AGENT_SYSTEM_PROMPT,
-#     PAPER_AGENT_DESC,
-#     SEARCH_AGENT_DESC
-# )
-from src.agents.agent import AgentCreator
-from src.agents.paper_agent.utils.paper_agent_utils import arxiv_paper_search, get_recent_papers, get_user_question_part_contents
-# from src.agents.paper_agent.paper_agent_nodes import paper_search_agent_node
 from src.common.prompts import PAPER_TEAM_MEMBER_DESC_PROMPT
 from src.state import ArxivMultiAgentState
+from src.agents.agent import AgentCreator
+from src.agents.agent_node import agent_node
+from src.agents.paper_agent.paper_agents import get_recent_papers, get_user_question_part_contents
 
 from dotenv import load_dotenv
 load_dotenv("../.env")
 
 
+
+## 1. agent define
+agent_creator = AgentCreator()
+
+supervisor_agent = agent_creator.create_supervisor_agent()
+
+paper_team_leader_agent = agent_creator.create_leader_agent(
+    system_prompt="You are Paper Team's leader.",
+    team_member_desc=PAPER_TEAM_MEMBER_DESC_PROMPT,
+    next_roles=["arxiv_paper_searcher"],
+    tools=[get_recent_papers, get_user_question_part_contents],
+)
+arxiv_paper_search_agent = agent_creator.create_chat_agent(
+    system_prompt="You are Paper Team's member agent, 'arxiv_paper_search_agent'. You will do below jobs:\n1. search paper by arxiv paper id.n\2. download that paper\n3. extract paper's indexes.",
+    next_roles=["paper_team_leader", "supervisor"]
+)
+
+## 2. agent node define
+supervisor_agent_node = functools.partial(agent_node, agent=supervisor_agent, name="supervisor")
+paper_team_leader_agent_node = functools.partial(agent_node, agent=paper_team_leader_agent, name="paper_team_leader")
+
+
+## 3. generate graph
 MEMBERS = [
     "paper_team_leader",
     # "search_team_leader",
     # "call_tool"
 ]
-
-agent_creator = AgentCreator()
-supervisor_agent = agent_creator.create_supervisor_agent()
-paper_teamleader_agent = agent_creator.create_leader_agent(
-    system_prompt="You are leader agent of 'paper_team'. collaborate with your team members and using your tools, answering to user's question.", 
-    tools=[get_recent_papers, get_user_question_part_contents],
-    team_member_desc=PAPER_TEAM_MEMBER_DESC_PROMPT,
-    next_roles=["arxiv_paper_searcher"]
-)
-paper_arxiv_paper_search_agent = arxiv_paper_search
-
 workflow = StateGraph(ArxivMultiAgentState)
-workflow.add_node("supervisor", supervisor_agent)
-workflow.add_node("paper_team_leader", paper_teamleader_agent)
-workflow.add_node("paper_arxiv_paper_searcher", paper_arxiv_paper_search_agent)
+workflow.add_node("supervisor", supervisor_agent_node)
+workflow.add_node("paper_team_leader", paper_team_leader_agent_node)
+workflow.add_node("paper_arxiv_paper_searcher", )
 # workflow.add_node("call_tool", tool_node)
 
 for member in MEMBERS:
@@ -60,30 +62,6 @@ conditional_map["FINISH"] = END
 print(f"conditional_map: {conditional_map}")
 workflow.add_conditional_edges("supervisor", lambda x: x["next"], conditional_map)
 
-# workflow.add_conditional_edges(
-#     "supervisor",
-#     router,
-#     {"continue": "supervisor", "Paper": "Paper", "Search": "Search", "call_tool": "call_tool", "__end__": END}
-# )
-# workflow.add_conditional_edges(
-#     "Paper",
-#     router,
-#     {"continue": "supervisor", "call_tool": "call_tool", "__end__": END},
-# )
-# workflow.add_conditional_edges(
-#     "Search",
-#     router,
-#     {"continue": "supervisor", "call_tool": "call_tool", "__end__": END},
-# )
-
-# workflow.add_conditional_edges(
-#     "call_tool",
-#     lambda x: x["sender"],
-#     {
-#         "Paper": "Paper",
-#         "Search": "Search"
-#     },
-# )
 
 workflow.set_entry_point("supervisor")
 print(workflow._all_edges)
@@ -104,6 +82,3 @@ if __name__ == "__main__":
         print(f"\n\nevent: {s}")
         print("-----")
         chat_logs.append(s)
-
-    # chat_logs에 메세지를 넣는 방법을 생각해야 할듯
-    # ic(chat_logs)

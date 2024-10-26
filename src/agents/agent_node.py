@@ -41,8 +41,10 @@ def _re_search_paper_index(text: str) -> t.Union[str, bool]:
 
 
 def agent_node(state, agent: Runnable, name:str) -> t.Dict[str, object]:
+    # call tool인 경우 대처 필요(10.26)
     temp_agent_result = {"sender": name}
     agent_result = agent.invoke(state)
+    print(agent_result)
 
     # 1. next agent 검색
     next_agent_search_result = _re_search_next_agent(text=agent_result.content)
