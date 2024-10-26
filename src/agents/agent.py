@@ -88,7 +88,7 @@ class AgentCreator:
         return agent
 
     def create_chat_agent(
-        self, tools: t.Sequence[BaseTool], system_prompt: str, tools_explain: str = None
+        self, tools: t.Sequence[BaseTool], system_prompt: str, next_roles: str
     ) -> Runnable:
         """Create a function-calling agnet and add it to the graph.
 
@@ -96,7 +96,7 @@ class AgentCreator:
             llm (ChatOpenAI): llm agent that base of agent.
             tools (t.Sequence[BaseTool]): tools that used in agent.
             system_prompt (str): system prompt of this agent.
-            tools_explain (str): explainations of this agent's tools. default is None.
+            next_roles (t.List[str]): next role names.
 
         Returns:
             Runnable: Agent Object.
@@ -105,41 +105,24 @@ class AgentCreator:
             [
                 (
                     "system",
-                    "## Common SYSTEM PROMPT\n"
-                    "You are a helpful AI assistant, collaborating with other assistants."
-                    " Use the provided tools to progress towards answering the question."
-                    " If you are unable to fully answer, that's OK, another assistant with different tools"
-                    " will help where you left off. Execute what you can to make progress."
-                    " If you or any of the other assistants have the final answer or deliverable,"
-                    " prefix your response with FINAL ANSWER so the team knows to stop."
-                    " every input and results should be korean.\n"
-                    "## SYSTEM PROMPT\n{system_prompt}\n"
-                    "## TOOLS\nYou have access to the following tools: {tool_names}"
-                    "\n\nbelow, tool's explains.\n{tools_explain}",
+                    "## TIPS\nin this part, the tips for agent object\n - tool and agent is different. so, when you move to next agent, don't generate tool call part, only generate next agent calling message following '5. HOW TO MOVE TO AGENTS?' part."
+                    "## 1. DEFAULT SYSTEM PROMPT\nUse the provided tools to progress towards answering the question. If you can't answer user question, it's ok, move to other agents. when generate chat message, follow '1.1 CHAT RULE' part.\n"
+                    "### 1.1 CHAT RULE\n- every answer should korean.\n"
+                    "## 2. SYSTEM PROMPT\n{prompt}\n"
+                    "## 3. NEXT ROLES\nthis is agent list that you can move to: {next_roles}\n"
+                    "## 4. HOW TO MOVE TO AGENTS?\nTo move to team member agent or other, generate only(not permit any annotations) message following this exact format:\n<next_agent>agent_name</next_agent>\n",
                 ),
                 MessagesPlaceholder(variable_name="messages"),
-                # MessagesPlaceholder(variable_name="state_infos"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
         )
-        prompt = prompt.partial(system_prompt=system_prompt)
 
-        # agent를 커스텀코드로 작성할지 고민 -> 매우 고민 파서가 그냥 내 결과값 다 날려버림(output 엉망)
-        if bool(tools):
-            llm_with_tools = self.llm.bind(functions=[convert_to_openai_function(t) for t in tools])
-            if tools_explain is not None:
-                prompt = prompt.partial(tools_explain=tools_explain)
-            else:
-                prompt = prompt.partial(
-                    tools_explain=", ".join([tool.description for tool in tools])
-                )
-            prompt = prompt.partial(tool_names=", ".join([tool.name for tool in tools]))
-        else:
-            prompt = prompt.partial(tools_explain="")
-            prompt = prompt.partial(tool_names="")
-            llm_with_tools = self.llm
+        prompt = (
+            prompt.partial(prompt=system_prompt)
+            .partial(next_roles=str(next_roles))
+        )
+        llm_with_tools = self.llm.bind_tools(tools=tools)
 
         agent = prompt | llm_with_tools
 
-        # agent = create_openai_functions_agent(llm=self.llm, prompt=prompt, tools=tools)
         return agent
