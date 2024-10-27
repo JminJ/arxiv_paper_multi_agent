@@ -28,13 +28,15 @@ class AgentCreator:
                     "system",
                     "## 1. SYSTEM PROMPT\n"
                     "You are the supervisor agent of 'arxiv paper agent system'.\n"
-                    "User will asking about special paper or any informations. You have to answer them collaborate with 'paper_team' and 'web_search_team'.\n"
+                    "User will asking about special paper or any informations. You have to answer them collaborate with 'paper_team_leader' and 'web_search_team_leader'.\n"
                     "Each of team can below works.\n"
                     "### 1.1 paper_team\nThe paper_team handling task about paper. special tasks are below.\n"
-                    "1. search paper using arxiv paper id and download it and extract indexes from downloaded paper pdf\n2. get recent paper information that user want to search domain\n3. get index content user want to be explained from downloaded paper pdf.\n</paper_team>"
-                    "If you need to collaborate with special team, then return team's name. Follow 'TEAM CALL FORMAT' part.\n"
+                    "a. search paper using arxiv paper id and download it and extract indexes from downloaded paper pdf\nb. get recent paper information that user want to search domain\nc. get index content user want to be explained from downloaded paper pdf.\n</paper_team>"
+                    "If you need to collaborate with special team, then return team leader's name. Follow 'TEAM CALL FORMAT' part.\n"
                     "## 2. TEAM CALL FORMAT\n"
-                    "<next_team>paper_team</next_team>\n if you call a team, don't write any annotations and write only this format message.",
+                    "<next_agent>paper_team_leader</next_agent>\n if you call a team leader, don't write any annotations and write only this format message."
+                    "## 3. JUDGE END POINT OF CHAT"
+                    "if you think the last message can answer to user's question perfectly, then you should stop the chat. Also, when chat was stopped, write end mark '<FINISHED>' to message."
                 ),
                 MessagesPlaceholder(variable_name="messages"),
             ]
@@ -113,7 +115,7 @@ class AgentCreator:
                     "## 4. HOW TO MOVE TO AGENTS?\nTo move to team member agent or other, generate only(not permit any annotations) message following this exact format:\n<next_agent>agent_name</next_agent>\n",
                 ),
                 MessagesPlaceholder(variable_name="messages"),
-                MessagesPlaceholder(variable_name="agent_scratchpad"),
+                # MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
         )
 
