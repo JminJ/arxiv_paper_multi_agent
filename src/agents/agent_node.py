@@ -41,10 +41,8 @@ def _re_search_paper_index(text: str) -> t.Union[str, bool]:
 
 
 def agent_node(state, agent: Runnable, name:str) -> t.Dict[str, object]:
-    # call tool인 경우 대처 필요(10.26)
     temp_agent_result = {"sender": name}
     agent_result = agent.invoke(state)
-    print(agent_result)
 
     # 1. next agent 검색
     next_agent_search_result = _re_search_next_agent(text=agent_result.content)
@@ -56,12 +54,8 @@ def agent_node(state, agent: Runnable, name:str) -> t.Dict[str, object]:
     if next_agent_search_result:
         temp_agent_result["paper_indexes"] = paper_index_search_result
 
-    # 3. messages 핸들링
-    if isinstance(agent_result, ToolMessage):
-        result_messages = [agent_result]
-    else:
-        result_messages = [AIMessage(agent_result.content)]  # 추후 기능 추가 등 고려(10.23)
-    temp_agent_result["messages"] = result_messages
+    # 3. messages
+    temp_agent_result["messages"] = agent_result
 
     return temp_agent_result
 
