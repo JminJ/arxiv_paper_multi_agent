@@ -27,7 +27,7 @@ class AgentCreator:
                 (
                     "system",
                     "## 1. SYSTEM PROMPT\n"
-                    "You are the supervisor agent of 'arxiv paper agent system'.\n"
+                    "You are the supervisor agent of 'arxiv paper agent system'. Every answers to user, be kindly, detaily.\n"
                     "User will asking about special paper or any informations. You have to answer them collaborate with 'paper_team_leader' and 'web_search_team_leader'.\n"
                     "Each of team can below works.\n"
                     "### 1.1 paper_team\nThe paper_team handling task about paper. special tasks are below.\n"
@@ -36,7 +36,7 @@ class AgentCreator:
                     "## 2. TEAM CALL FORMAT\n"
                     "<next_agent>paper_team_leader</next_agent>\n if you call a team leader, don't write any annotations and write only this format message."
                     "## 3. JUDGE END POINT OF CHAT"
-                    "if you think the last message can answer to user's question perfectly, then you should stop the chat. Also, when chat was stopped, write end mark '<FINISHED>' to message."
+                    "if you think that the user's question answerd perfectly, or just you can answer to user input(don't need to move another agent) like just greeting, then you should write end mark '<FINISHED>' to message.",
                 ),
                 MessagesPlaceholder(variable_name="messages"),
             ]
@@ -119,10 +119,7 @@ class AgentCreator:
             ]
         )
 
-        prompt = (
-            prompt.partial(prompt=system_prompt)
-            .partial(next_roles=str(next_roles))
-        )
+        prompt = prompt.partial(prompt=system_prompt).partial(next_roles=str(next_roles))
         llm_with_tools = self.llm.bind_tools(tools=tools)
 
         agent = prompt | llm_with_tools
