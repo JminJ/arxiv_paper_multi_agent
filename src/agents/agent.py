@@ -73,7 +73,9 @@ class AgentCreator:
                     "## 2. LEADER SYSTEM PROMPT\n{prompt}\n"
                     "## 3. TEAM MEMBER AGENTS\nthis is your team member agent's descriptions.\n{team_member_desc}\n"
                     "## 4. NEXT ROLES\nthis is agent list that you can move to(include team member agents): {next_roles}\n"
-                    "## 5. HOW TO MOVE TO AGENTS?\nTo move to team member agent or other, generate only(not permit any annotations) message following this exact format:\n<next_agent>agent_name</next_agent>\n",
+                    "## 5. HOW TO MOVE TO AGENTS?\nTo move to team member agent or other, generate only(not permit any annotations) message following this exact format:\n<next_agent>agent_name</next_agent>\n"
+                    "## JUDGE END POINT OF CHAT\n"
+                    "if you think that the user's question answerd perfectly, or just you can answer to user input(don't need to move another agent) like just greeting, then you should write end mark '<FINISHED>' to message.",
                 ),
                 MessagesPlaceholder(variable_name="messages"),
                 # MessagesPlaceholder(variable_name="state_infos"), # graph state 정보 반영
@@ -112,7 +114,9 @@ class AgentCreator:
                     "### 1.1 CHAT RULE\n- every answer should korean.\n"
                     "## 2. SYSTEM PROMPT\n{prompt}\n"
                     "## 3. NEXT ROLES\nthis is agent list that you can move to: {next_roles}\n"
-                    "## 4. HOW TO MOVE TO AGENTS?\nTo move to team member agent or other, generate only(not permit any annotations) message following this exact format:\n<next_agent>agent_name</next_agent>\n",
+                    "## 4. HOW TO MOVE TO AGENTS?\nTo move to team member agent or other, generate only(not permit any annotations) message following this exact format:\n<next_agent>agent_name</next_agent>\n"
+                    "## JUDGE END POINT OF CHAT\n"
+                    "if you think that the user's question answerd perfectly, or just you can answer to user input(don't need to move another agent) like just greeting, then you should write end mark '<FINISHED>' to message.",
                 ),
                 MessagesPlaceholder(variable_name="messages"),
                 # MessagesPlaceholder(variable_name="agent_scratchpad"),
