@@ -9,4 +9,4 @@ class ArxivMultiAgentState(t.TypedDict):
     next_role: str
     sender: str
     target_paper_path: str
-    paper_indexes: t.Dict
+    paper_indexes: t.Dict = None
