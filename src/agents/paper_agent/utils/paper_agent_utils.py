@@ -27,54 +27,9 @@ from src.utils.get_rss_url_values import get_processed_entries_from_rss_url
 from src.utils.paper_pdf_handler import paper_pdf_download, paper_pdf_load
 
 
-@chain
-def arxiv_paper_search(user_input: str) -> t.Tuple[t.List[Document], t.Dict[str, int], str]:
-    """arxiv paper id로 paper를 검색합니다.
-
-    Args:
-        user_input (str): 사용자 입력
-
-    Returns:
-        t.Tuple[t.List[Document], t.Dict[str, int], str]: paper info list, paper indexes, paper path
-    """
-    client = ChatOpenAI(model=CHAT_MODEL, temperature=0.0)
-
-    # 1. extract arxiv paper id from user_input.
-    extract_paper_id_prompt = ChatPromptTemplate.from_messages(
-        [("system", EXTRACT_ARXIV_PAPER_ID_PROMPT[0]), ("user", EXTRACT_ARXIV_PAPER_ID_PROMPT[1])]
-    )
-
-    extract_paper_id_chain = extract_paper_id_prompt | client
-    paper_id = eval(extract_paper_id_chain.invoke(input={"user_input": user_input}).content)
-    ic(paper_id)
-
-    # 2. search arxiv paper
-    paper_infos = [
-        ArxivLoader(query=id, doc_content_chars_max=1, load_all_available_meta=True).load()[0]
-        for id in paper_id
-    ]
-    ic(paper_infos)
-
-    # 3. download arxiv paper pdf
-    paper_save_paths = []
-    for paper_info in paper_infos:
-        http_pdf_path = paper_info.metadata["links"][1]
-        arxiv_pdf_name = ".".join([http_pdf_path.split("/")[-1][:10], "pdf"])
-        download_path = os.path.join(PDF_DOWNLOAD_DIR, arxiv_pdf_name)
-
-        if not os.path.isfile(download_path):
-            paper_pdf_download(http_pdf_path=http_pdf_path, pdf_download_path=download_path)
-        paper_save_paths.append(download_path)
-
-    # 4. extract paper index
-    index_extractor = ExtractPaperIndexes(using_llm_name=CHAT_MODEL)
-    paper_index_dict = index_extractor.run_extract_all_indexes(paper_pdf_load(paper_save_paths[0]))
-
-    return paper_infos, paper_index_dict, paper_save_paths[0]
-
 @tool
-def search_paper_by_arxiv_id(arxiv_paper_id:t.List[str])->t.List[str]:
-    """arxiv id를 통해 특정 논문을 검색하고, 해당 논문 pdf를 다운로드를 수행합니다.
+def search_paper_by_arxiv_id(arxiv_paper_id: t.List[str]) -> t.List[str]:
+    """arxiv id를 통해 특정 논문을 찾고, 해당 논문 pdf를 다운로드를 수행합니다.
 
     Args:
         arxiv_paper_id (t.List[str]): 찾고자 하는 논문의 arxiv id들.
@@ -82,6 +37,9 @@ def search_paper_by_arxiv_id(arxiv_paper_id:t.List[str])->t.List[str]:
     Returns:
         t.List[str]: 논문을 다운로드한 경로(path)들.
     """
+    # 0. save dir make
+    if not os.path.isdir(PDF_DOWNLOAD_DIR):
+        os.mkdir(PDF_DOWNLOAD_DIR)
     # 1. search arxiv papers
     paper_infos = [
         ArxivLoader(query=id, doc_content_chars_max=1, load_all_available_meta=True).load()[0]
@@ -94,15 +52,17 @@ def search_paper_by_arxiv_id(arxiv_paper_id:t.List[str])->t.List[str]:
         http_pdf_path = paper_info.metadata["links"][1]
         arxiv_pdf_name = ".".join([http_pdf_path.split("/")[-1][:10], "pdf"])
         download_path = os.path.join(PDF_DOWNLOAD_DIR, arxiv_pdf_name)
+        # print(f"download path: {download_path}")
 
         if not os.path.isfile(download_path):
             paper_pdf_download(http_pdf_path=http_pdf_path, pdf_download_path=download_path)
         paper_save_paths.append(download_path)
-    
+
     return paper_save_paths
 
+
 @tool
-def paper_index_extract(target_paper_path:str)->t.Dict[str, int]:
+def paper_index_extract(target_paper_path: str) -> t.Dict[str, int]:
     """대상 paper pdf내에서 index를 추출합니다.
 
     Args:
@@ -116,9 +76,10 @@ def paper_index_extract(target_paper_path:str)->t.Dict[str, int]:
 
     return paper_index_dict
 
+
 @tool
-def get_recent_papers(user_input: str) -> str:
-    """arxiv api를 통해 사용자가 원하는 논문 domain의 최신 논문들의 abstract를 제공합니다. 단, 특정 arxiv id기반 논문 검색은 수행할 수 없습니다.
+def get_recent_upload_papers(user_input: str) -> str:
+    """사용자가 원하는 논문 domain의 최신 논문들의 abstract를 제공합니다. 단, 특정 arxiv id기반 논문 검색은 수행할 수 없습니다.
 
     Args:
         user_input (str): 사용자 입력
@@ -155,6 +116,7 @@ def get_recent_papers(user_input: str) -> str:
         input={"rss_entries": rss_entries}
     ).content
     ic(recent_papers_markdown)
+    ic(type(recent_papers_markdown))
 
     return recent_papers_markdown
 
@@ -197,12 +159,4 @@ def get_user_question_part_contents(
 
 
 if __name__ == "__main__":
-    paper_information, paper_indexes, paper_save_path = arxiv_paper_search.invoke(
-        input="2402.09353 논문을 찾아줘"
-    )
-    print(f"\n\n{paper_information}")
-    print(f"\n{paper_indexes}")
-    # print(type(result))
-
-    # result = get_recent_papers.invoke(input="nlp최신 논문 보여주세요")
-    # print(result)
+    pass
