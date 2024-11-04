@@ -32,6 +32,8 @@ class AgentCreator:
                     "Each of team can below works.\n"
                     "### 1.1 paper_team\nThe paper_team handling task about paper. special tasks are below.\n"
                     "a. search paper using arxiv paper id and download it and extract indexes from downloaded paper pdf\nb. get recent paper information that user want to search domain\nc. get index content user want to be explained from downloaded paper pdf.\n</paper_team>"
+                    "### 1.2 search_team\nThe search_team can search special information from internet. special tasks are below.\n"
+                    "a. search special subject from internet.\n</search_team>"
                     "If you need to collaborate with special team, then return team leader's name. Follow 'TEAM CALL FORMAT' part.\n"
                     "## 2. TEAM CALL FORMAT\n"
                     "<next_agent>paper_team_leader</next_agent>\n if you call a team leader, don't write any annotations and write only this format message."
