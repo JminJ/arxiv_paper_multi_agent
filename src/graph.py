@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode
+from langchain_community.tools import DuckDuckGoSearchRun
 
 # sys.path.append("/home/jminj/jminj/arxiv_paper_multi_agent")
 from src.agents.agent import AgentCreator
@@ -21,6 +22,7 @@ from src.agents.paper_agent.utils.paper_agent_utils import (
     paper_index_extract,
     search_paper_by_arxiv_id,
 )
+from src.agents.search_agent.search_agents import search_team_leader_agent
 from src.state import ArxivMultiAgentState
 
 load_dotenv(".env")
@@ -38,12 +40,14 @@ paper_team_leader_agent_node = functools.partial(
 arxiv_paper_search_agent_node = functools.partial(
     agent_node, agent=arxiv_paper_search_agent, name="arxiv_paper_searcher"
 )
+search_team_leader_agent_node = functools.partial(agent_node, agent=search_team_leader_agent, name="search_team_leader")
 tool_node = ToolNode(
     tools=[
         search_paper_by_arxiv_id,
         paper_index_extract,
         get_recent_upload_papers,
         get_user_question_part_contents,
+        DuckDuckGoSearchRun()
     ]
 )  # 추후 search tools도 적재
 
@@ -65,10 +69,11 @@ workflow = StateGraph(ArxivMultiAgentState)
 workflow.add_node("supervisor", supervisor_agent_node)
 workflow.add_node("paper_team_leader", paper_team_leader_agent_node)
 workflow.add_node("arxiv_paper_searcher", arxiv_paper_search_agent_node)
+workflow.add_node("search_team_leader", search_team_leader_agent_node)
 workflow.add_node("call_tool", tool_node)
 
 workflow.add_conditional_edges(
-    "supervisor", router, {"paper_team_leader": "paper_team_leader", END: END}
+    "supervisor", router, {"paper_team_leader": "paper_team_leader", "search_team_leader": "search_team_leader", END: END}
 )
 workflow.add_conditional_edges(
     "paper_team_leader",
@@ -86,11 +91,21 @@ workflow.add_conditional_edges(
     {"call_tool": "call_tool", "paper_team_leader": "paper_team_leader", END: END},
 )
 workflow.add_conditional_edges(
+    "search_team_leader",
+    router,
+    {
+        "call_tool": "call_tool",
+        "supervisor": "supervisor",
+        END: END,
+    },
+)
+workflow.add_conditional_edges(
     "call_tool",
     lambda x: x["sender"],
     {
         "paper_team_leader": "paper_team_leader",
         "arxiv_paper_searcher": "arxiv_paper_searcher",
+        "search_team_leader": "search_team_leader"
     },
 )
 
@@ -104,7 +119,7 @@ if __name__ == "__main__":
         {
             "messages": [
                 HumanMessage(
-                    content="2410.02703 id를 갖는 논문을 검색 후, 2 MOTIVATING EXAMPLES 목차의 논문 내용을 설명해주세요."
+                    content=""
                 )
                 # HumanMessage(content="search recent paper in nlp domain.")
             ]
